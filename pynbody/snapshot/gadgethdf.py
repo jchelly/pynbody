@@ -32,6 +32,11 @@ try:
 except ImportError:
     h5py = None
 
+try:
+    import hdfstream
+except ImportError:
+    hdfstream = None
+
 _default_type_map = {}
 for x in family.family_names():
     try:
@@ -73,14 +78,21 @@ class _GadgetHdfMultiFileManager:
     _size_from_hdf5_key = "ParticleIDs"
     _subgroup_name = None
 
-    def __init__(self, filename, mode='r') :
+    def __init__(self, filename, mode='r', hdf5=None) :
+
+        # Determine access method for HDF5 files
+        if hdf5 is None:
+            self._hdf5 = h5py
+        else:
+            self._hdf5 = hdf5
+
         filename = str(filename)
         self._mode = mode
-        if h5py.is_hdf5(filename):
+        if self._hdf5.is_hdf5(filename):
             self._filenames = [filename]
             self._numfiles = 1
         else:
-            h1 = h5py.File(filename + ".0.hdf5", mode)
+            h1 = self._hdf5.File(filename + ".0.hdf5", mode)
             self._numfiles = self._get_num_files(h1)
             if hasattr(self._numfiles, "__len__"):
                 assert len(self._numfiles) == 1
@@ -98,7 +110,7 @@ class _GadgetHdfMultiFileManager:
     def __iter__(self) :
         for i in range(self._numfiles) :
             if i not in self._open_files:
-                self._open_files[i] = h5py.File(self._filenames[i], self._mode)
+                self._open_files[i] = self._hdf5.File(self._filenames[i], self._mode)
                 if self._subgroup_name is not None:
                     self._open_files[i] = self._open_files[i][self._subgroup_name]
 
@@ -172,14 +184,21 @@ class GadgetHDFSnap(SimSnap):
     _mass_pynbody_name = "mass"
     _eps_pynbody_name = "eps"
 
-    def __init__(self, filename):
+    def __init__(self, filename, server=None, user=None, password=None):
         """Initialise a Gadget HDF snapshot.
 
         Spanned files are supported. To load a range of files ``snap.0.hdf5``, ``snap.1.hdf5``, ... ``snap.n.hdf5``,
         pass the filename ``snap``. If you pass e.g. ``snap.2.hdf5``, only file 2 will be loaded.
         """
-
         super().__init__()
+
+        # Determine how we're reading the data
+        if server is None:
+            # Read local files using h5py
+            self._hdf5 = h5py
+        else:
+            # Read remote files using hdfstream
+            self._hdf5 = hdfstream.open(server, "/", user=user, password=password)
 
         self._filename = filename
 
@@ -234,7 +253,7 @@ class GadgetHDFSnap(SimSnap):
         return self._hdf_files.get_unit_attrs()
 
     def _init_hdf_filemanager(self, filename):
-        self._hdf_files = self._multifile_manager_class(filename)
+        self._hdf_files = self._multifile_manager_class(filename, hdf5=self._hdf5)
 
     def __init_loadable_keys(self):
 
@@ -700,7 +719,7 @@ class GadgetHDFSnap(SimSnap):
 
     @classmethod
     def _test_for_hdf5_key(cls, f):
-        with h5py.File(f, "r") as h5test:
+        with self._hdf5.File(f, "r") as h5test:
             test_key = cls._readable_hdf5_test_key
             found = False
             if test_key[-1]=="?":
@@ -727,10 +746,10 @@ class GadgetHDFSnap(SimSnap):
 
     @classmethod
     def _can_load(cls, f):
-        if hasattr(h5py, "is_hdf5"):
-            if h5py.is_hdf5(f):
+        if hasattr(self._hdf5, "is_hdf5"):
+            if self._hdf5.is_hdf5(f):
                 return cls._test_for_hdf5_key(f)
-            elif h5py.is_hdf5(f.with_suffix(".0.hdf5")):
+            elif self._hdf5.is_hdf5(f.with_suffix(".0.hdf5")):
                 return cls._test_for_hdf5_key(f.with_suffix(".0.hdf5"))
             else:
                 return False
