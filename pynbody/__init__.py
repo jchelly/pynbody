@@ -21,6 +21,7 @@ from . import (
     filt,
     gravity,
     halo,
+    remotehdf,
     snapshot,
     sph,
     transformation,

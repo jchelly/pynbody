@@ -37,14 +37,19 @@ def load(filename, *args, **kwargs) -> SimSnap:
 
     """
 
-    filename = pathlib.Path(filename)
+    filepath = pathlib.Path(filename)
 
     priority = kwargs.pop('priority', config['snap-class-priority'])
 
     for c in SimSnap.iter_subclasses_with_priority(priority):
-        if c._can_load(filename):
+        # Some implementations can load URLs, which must not be converted to Path objects
+        if hasattr(c, "_can_load_url"):
+            if c._can_load_url(filename):
+                logger.info("Loading using backend %s" % str(c))
+                return c(filename, *args, **kwargs)
+        if c._can_load(filepath):
             logger.info("Loading using backend %s" % str(c))
-            return c(filename, *args, **kwargs)
+            return c(filepath, *args, **kwargs)
 
     raise OSError(
         "File %r: format not understood or does not exist" % filename)

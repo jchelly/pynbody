@@ -22,7 +22,7 @@ import warnings
 
 import numpy as np
 
-from .. import config_parser, family, units, util
+from .. import config_parser, family, remotehdf, units, util
 from . import SimSnap, namemapper
 
 logger = logging.getLogger('pynbody.snapshot.gadgethdf')
@@ -31,11 +31,6 @@ try:
     import h5py
 except ImportError:
     h5py = None
-
-try:
-    import hdfstream
-except ImportError:
-    hdfstream = None
 
 _default_type_map = {}
 for x in family.family_names():
@@ -184,7 +179,7 @@ class GadgetHDFSnap(SimSnap):
     _mass_pynbody_name = "mass"
     _eps_pynbody_name = "eps"
 
-    def __init__(self, filename, server=None, user=None, password=None):
+    def __init__(self, filename):
         """Initialise a Gadget HDF snapshot.
 
         Spanned files are supported. To load a range of files ``snap.0.hdf5``, ``snap.1.hdf5``, ... ``snap.n.hdf5``,
@@ -193,12 +188,12 @@ class GadgetHDFSnap(SimSnap):
         super().__init__()
 
         # Determine how we're reading the data
-        if server is None:
+        if remotehdf.is_hdfstream_url(filename):
+            # Read remote files using hdfstream
+            self._hdf5, filename = remotehdf.connect(filename)
+        else:
             # Read local files using h5py
             self._hdf5 = h5py
-        else:
-            # Read remote files using hdfstream
-            self._hdf5 = hdfstream.open(server, "/", user=user, password=password)
 
         self._filename = filename
 
@@ -718,8 +713,10 @@ class GadgetHDFSnap(SimSnap):
             vel_unit*units.cm/units.s, dist_unit*units.cm, mass_unit*units.g, "K"]]
 
     @classmethod
-    def _test_for_hdf5_key(cls, f):
-        with self._hdf5.File(f, "r") as h5test:
+    def _test_for_hdf5_key(cls, f, hdf5=None):
+        if hdf5 is None:
+            hdf5 = h5py
+        with hdf5.File(f, "r") as h5test:
             test_key = cls._readable_hdf5_test_key
             found = False
             if test_key[-1]=="?":
@@ -746,10 +743,10 @@ class GadgetHDFSnap(SimSnap):
 
     @classmethod
     def _can_load(cls, f):
-        if hasattr(self._hdf5, "is_hdf5"):
-            if self._hdf5.is_hdf5(f):
+        if hasattr(h5py, "is_hdf5"):
+            if h5py.is_hdf5(f):
                 return cls._test_for_hdf5_key(f)
-            elif self._hdf5.is_hdf5(f.with_suffix(".0.hdf5")):
+            elif h5py.is_hdf5(f.with_suffix(".0.hdf5")):
                 return cls._test_for_hdf5_key(f.with_suffix(".0.hdf5"))
             else:
                 return False
@@ -757,6 +754,29 @@ class GadgetHDFSnap(SimSnap):
             if "hdf5" in f:
                 warnings.warn(
                     "It looks like you're trying to load HDF5 files, but python's HDF support (h5py module) is missing.", RuntimeWarning)
+            return False
+
+    @classmethod
+    def _can_load_url(cls, f):
+
+        if remotehdf.is_hdfstream_url(f):
+            # This looks like the URL of a remote file
+            if remotehdf.hdfstream is None:
+                warnings.warn(
+                    "It looks like you're trying to load remote files using hdfstream, but the hdfstream module is missing.", RuntimeWarning)
+                return False
+            else:
+                hdf5, f = remotehdf.connect(f)
+        else:
+            # This does not look like a URL
+            return False
+
+        # Check if the remote file is a HDF5 file which contains the expected keys
+        if hdf5.is_hdf5(f):
+            return cls._test_for_hdf5_key(f, hdf5)
+        elif hdf5.is_hdf5(f.with_suffix(".0.hdf5")):
+            return cls._test_for_hdf5_key(f.with_suffix(".0.hdf5"), hdf5)
+        else:
             return False
 
     def _init_properties(self):
