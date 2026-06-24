@@ -19,7 +19,7 @@ runs:
     - name: Start hdfstream service with tests/data mounted
       shell: bash
       run: |
-        docker run -platform linux/amd64 -d \
+        docker run --platform linux/amd64 -d \
           --name hdfstream \
           -p 8080:8080 \
           -v ${{ inputs.data-dir }}:/opt/hdfstream/data:ro \
