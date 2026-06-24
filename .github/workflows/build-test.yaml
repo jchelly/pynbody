@@ -56,7 +56,6 @@ jobs:
 
     - name: Start hdfstream container to serve test data
       uses: ./.github/actions/start-hdfstream
-      if: ${{ (matrix.os == 'ubuntu-latest') }}
       with:
         data-dir: ./tests/testdata
         virtual-prefix: testdata
@@ -80,4 +79,3 @@ jobs:
 
     - name: Stop hdfstream container
       uses: ./.github/actions/stop-hdfstream
-      if: ${{ (matrix.os == 'ubuntu-latest') }}
