@@ -14,7 +14,7 @@ import urllib.request
 
 import osfclient
 
-# OSF cache of the form { osf_project_id : (osf_project, file_cache)}
+# Cache OSF file objects to avoid repeating http requests
 _OSF_STORAGE_CACHE = {}
 
 test_data_packages = {
