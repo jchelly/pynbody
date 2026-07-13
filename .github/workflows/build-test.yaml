@@ -65,9 +65,10 @@ jobs:
         enableCrossOsArchive: true
 
     - name: Copy table data to pynbody installation
+      working-directory: ionfrac_tables
       run: |
-        DEST_DIR=$(python3 -c "import pynbody ; import os ; print(os.path.dirname(pynbody.analysis.__file__))")
-        cp ionfrac_tables/*.npz "${DESTDIR}"
+        DEST_DIR=$(python -c "import pynbody ; import os ; print(os.path.dirname(pynbody.analysis.__file__))")
+        cp *.npz "${DESTDIR}"
 
     - name: Run all tests
       working-directory: tests
