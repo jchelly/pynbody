@@ -322,6 +322,7 @@ class IonFractionTable(IonFractionTableBase):
         logger.warning("Downloading ion fraction table %s" % name)
         osf_file = get_osf_file_object('z46rq', f'{name}.npz')
         filename = cls._table_to_path(name)
+        print("Download: ", filename)
         raise RuntimeError("Should not be downloading anything!")
         with open(filename, 'wb') as f:
             osf_file.write_to(f)
