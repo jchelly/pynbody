@@ -161,6 +161,6 @@ def _download_and_unpack_test_data_if_not_present(package, package_name, verbose
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "--fetch":
-            precache_test_data(verbose=True)
+        precache_test_data(verbose=True)
     else:
         print(test_data_hash())
