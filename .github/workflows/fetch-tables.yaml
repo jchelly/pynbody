@@ -28,5 +28,5 @@ jobs:
     - name: Fetch table data
       if: steps.cache-tables.outputs.cache-hit != 'true'
       run: |
-        osf -p z46rq fetch hm12.npz pynbody/analysis/hm12.npz
-        osf -p z46rq fetch fg20.np2 pynbody/analysis/fg20.npz
+        osf -p z46rq fetch hm12.npz ionfrac_tables/hm12.npz
+        osf -p z46rq fetch fg20.np2 ionfrac_tables/fg20.npz
