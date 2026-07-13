@@ -29,4 +29,4 @@ jobs:
       if: steps.cache-tables.outputs.cache-hit != 'true'
       run: |
         osf -p z46rq fetch hm12.npz ionfrac_tables/hm12.npz
-        osf -p z46rq fetch fg20.np2 ionfrac_tables/fg20.npz
+        osf -p z46rq fetch fg20.npz ionfrac_tables/fg20.npz
