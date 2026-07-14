@@ -275,16 +275,21 @@ class _HDFArrayFiller:
 
     def _fill_from_fancy_index(self, sim_array_to_fill, hdf_dataset, source_sel):
         """Fill array from a non-contiguous (fancy) index."""
-        id_min, id_max = source_sel[0], source_sel[-1]
-        num_read = id_max - id_min + 1
-        indices_in_read_chunk = source_sel - id_min
 
-        contiguous_hdf_slice = self._get_contiguous_hdf_slice(id_min, id_max)
+        if hdfstream is not None and isinstance(hdf_dataset, hdfstream.RemoteDataset):
+            # Special case for remote files: fancy indexing is implemented by the hdfstream module
+            final_data_to_fill = hdf_dataset[source_sel,...]
+        else:
+            id_min, id_max = source_sel[0], source_sel[-1]
+            num_read = id_max - id_min + 1
+            indices_in_read_chunk = source_sel - id_min
 
-        data_chunk_from_hdf = hdf_dataset[contiguous_hdf_slice]
-        data_chunk_from_hdf = data_chunk_from_hdf.reshape(num_read, *sim_array_to_fill.shape[1:])
+            contiguous_hdf_slice = self._get_contiguous_hdf_slice(id_min, id_max)
 
-        final_data_to_fill = data_chunk_from_hdf[indices_in_read_chunk]
+            data_chunk_from_hdf = hdf_dataset[contiguous_hdf_slice]
+            data_chunk_from_hdf = data_chunk_from_hdf.reshape(num_read, *sim_array_to_fill.shape[1:])
+
+            final_data_to_fill = data_chunk_from_hdf[indices_in_read_chunk]
 
         if sim_array_to_fill.shape == final_data_to_fill.shape:
             sim_array_to_fill[:] = final_data_to_fill
