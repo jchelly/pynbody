@@ -1,10 +1,3 @@
-import os
-import pathlib
-import shutil
-import tempfile
-import weakref
-
-import h5py
 import numpy as np
 
 from .. import halo, units, util
