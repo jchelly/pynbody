@@ -21,7 +21,7 @@ def get_data():
 
 def test_load_identifies_swift(load_kwargs):
     f = pynbody.load("testdata/SWIFT/snap_0150.hdf5", **load_kwargs)
-    assert isinstance(f, pynbody.snapshot.swift.BaseSwiftSnap)
+    assert isinstance(f, pynbody.snapshot.swift.SwiftSnap)
 
 def test_swift_properties(load_kwargs):
     f = pynbody.load("testdata/SWIFT/snap_0150.hdf5", **load_kwargs)
@@ -40,7 +40,7 @@ def test_swift_properties(load_kwargs):
 
 def test_swift_noncosmological(load_kwargs):
     f = pynbody.load("testdata/SWIFT/isolated_0008.hdf5", **load_kwargs)
-    assert isinstance(f, pynbody.snapshot.swift.BaseSwiftSnap)
+    assert isinstance(f, pynbody.snapshot.swift.SwiftSnap)
     assert (f['pos'].units / pynbody.units.Unit("cm")).is_dimensionless()
 
 
@@ -79,7 +79,7 @@ def _assert_multifile_contents_is_sensible(f):
 
 def test_swift_multifile_with_vds(load_kwargs):
     f = pynbody.load("testdata/SWIFT/multifile_with_vds/snap_0000.hdf5", **load_kwargs)
-    assert isinstance(f, pynbody.snapshot.swift.BaseSwiftSnap)
+    assert isinstance(f, pynbody.snapshot.swift.SwiftSnap)
     assert len(f._hdf_files) == 1
     assert f._hdf_files.is_virtual()
     _assert_multifile_contents_is_sensible(f)
@@ -87,7 +87,7 @@ def test_swift_multifile_with_vds(load_kwargs):
 
 def test_swift_multifile_without_vds(load_kwargs):
     f = pynbody.load("testdata/SWIFT/multifile_without_vds/snap_0000", **load_kwargs)
-    assert isinstance(f, pynbody.snapshot.swift.BaseSwiftSnap)
+    assert isinstance(f, pynbody.snapshot.swift.SwiftSnap)
     assert len(f._hdf_files) == 10
     assert not f._hdf_files.is_virtual()
     _assert_multifile_contents_is_sensible(f)
@@ -251,7 +251,7 @@ def test_alternate_mass_file(swift_snap_with_alternate_mass_naming, load_kwargs)
 
 def test_load_planetary(load_kwargs):
     f = pynbody.load("testdata/SWIFT/planetary.hdf5", **load_kwargs)
-    assert isinstance(f, pynbody.snapshot.swift.BaseSwiftSnap)
+    assert isinstance(f, pynbody.snapshot.swift.SwiftSnap)
     assert len(f) == 1000
     assert len(f.gas) == 1000
 
