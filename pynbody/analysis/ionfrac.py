@@ -301,6 +301,7 @@ class IonFractionTable(IonFractionTableBase):
 
         if not os.path.exists(filename):
             if not os.path.exists(cls._table_to_path(filename)):
+                raise RuntimeError("Should not be downloading anything!")
                 cls._download_ionfracs(filename)
                 # this will raise an exception if the download fails, so now we can try again:
             filename = cls._table_to_path(filename)
